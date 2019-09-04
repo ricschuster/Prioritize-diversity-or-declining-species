@@ -847,127 +847,127 @@ write.csv(csv.df.lc, here("csv.df.land_change.csv"), row.names = FALSE)
 ####################################################################################
 ### Figures
 ####################################################################################
-library(raster)
-library(readxl)
-library(dplyr)
-library(plyr)
-library(tidyverse)
-library(sf)
-library(raster)
-library(RColorBrewer)
-library(here)
-library(leaflet)
-library(png)
-library(fields)
-
-load("raster_setup.RData")
-
-here("R") %>% 
-  list.files(full.names = TRUE) %>% 
-  walk(source)
-
-# natural earth political boundaries
-ne_land <- read_sf("data/ne-land.gpkg") %>% st_geometry()
-ne_country_lines <- read_sf("data/ne-country-lines.gpkg") %>% st_geometry()
-ne_state_lines <- read_sf("data/ne-state-lines.gpkg") %>% st_geometry()
-
-
-idx.r <- nb.stack[[1]]
-idx.r[] <- 1:length(nb.stack[[1]][])
-
-figs <- read_xlsx("Paper 2 data for figures_updated.xlsx")
-
-figs2 <- mutate(figs,
-       Fig1a = ifelse(Fig1a.Diversity.high.priority == 1, 3, ifelse(Fig1a.Diversity.mod.priority == 1, 2, 1)),
-       Fig1b = ifelse(Fig1b.Med.declines.high.priority == 1, 3, ifelse(Fig1b.Med.declines.mod.priority  == 1, 2, 1)),
-       Fig1c = ifelse(Fig1c.No.declining.high.priority == 1, 3, ifelse(Fig1c.No.declining.mod.priority   == 1, 2, 1)),
-       
-       Fig2a = ifelse(Fig2a.Overlap.diversity.med.decline.high == 1, 3, ifelse(Fig2a.Overlap.diversity.med.decline.mod == 1, 2, 1)),
-       Fig2b = ifelse(Fig2b.Overlap.diversity.no.decline.high == 1, 3, ifelse(Fig2b.Overlap.diversity.no.decline.mod == 1, 2, 1)),
-       Fig2c = ifelse(Fig2c.Overlap.med.decline.no.decline.high == 1, 3, ifelse(Fig2c.Overlap.med.decline.no.decline.mod   == 1, 2, 1))
-)
-
-idx.df <- data.frame(idx = idx.r[])
-idx.df <- join(idx.df, figs2, by = "idx")
-
-fig.r <- idx.r
-fig.r[] <- idx.df$Fig1a
-plot(fig.r)
-
-fig.lst <- list()
-
-for(ii in 19:24){
-  fig.r[] <- idx.df[,ii]
-  fig.lst[[ii- 18]] <- fig.r
-}
-
-fig.st <- stack(fig.lst)
-names(fig.st) <- c("Fig1a", "Fig1b", "Fig1c", "Fig2a", "Fig2b", "Fig2c")
-
-
-# process for visualization
-crs <- "+proj=moll +lon_0=-90 +x_0=0 +y_0=0 +ellps=WGS84"
-abd_plot <- fig.st %>% 
-  stem_to_na() %>% 
-  projectRaster(crs = crs) %>% 
-  sqrt() %>% 
-  stem_crop()
-# remove migration cells covered by abundance in another season
-#abd_plot[["migration"]] <- mask(abd_plot[["migration"]],
-#                                calc(abd_plot[[c("breeding", "winter")]], 
-#                                     mean, na.rm = TRUE),
-#                                inverse = TRUE)
-
-
-# plot
-e <- extent(abd_plot)
-text_col <- "black"
-
-fig <- names(abd_plot)
-palette <- c("Greens", "Blues", "BuPu", "Reds")
-legend_offsets <- c(0.01, 0.06, 0.11, 0.16)
-# prepare vector layers
-land <- st_transform(ne_land, crs = crs)
-country <- st_transform(ne_country_lines, crs = crs)
-state <- st_transform(ne_state_lines, crs = crs)
-
-# plot fig
-for (ii in seq_along(fig)) {
-  
-  title <- paste(fig[ii])
-  # print map
-  here("out_all_spp/fig", paste0(fig[ii], ".png")) %>% 
-    png(width = 3000, height = 3000, res = 300)
-  par(mar = c(0, 0, 0, 0), oma = c(0,0,0,0), bg = "white")
-  plot(land, col = "grey40", border = NA, xlim = e[1:2], ylim = e[3:4])
-  
-  pal <- brewer.pal(3, "Set1")
-  pal <- colorRampPalette(pal)
-  #pal <- colorFactor("RdYlBu", domain = NULL)
-  #pal <- colorQuantile(pal, values(abd_plot[[fig[ii]]]), n = 8, #probs = seq(0, 1, length.out = n + 1),
-  #              na.color = "#808080", alpha = FALSE, reverse = FALSE)
-  plot(abd_plot[[gsub(" ", ".",fig[ii])]], add = TRUE, col = pal(256), legend = FALSE, 
-       maxpixels = ncell(abd_plot))
-  add_legend(fig[ii], pal, legend_offsets[3], low_high = TRUE,
-             text_col = text_col)
-  
-  # boundaries
-  plot(state, col = "black", lwd = 0.5, lty = 1, add = TRUE)
-  plot(country, col = "black", lwd = 1, add = TRUE)
-  
-  # title
-  # plot bounds
-  usr <- par("usr")
-  xwidth <- usr[2] - usr[1]
-  yheight <- usr[4] - usr[3]
-  # labels
-  text(x = usr[1] + 0.05 * xwidth, y = usr[3] + 0.21 * yheight,
-       labels = title, pos = 4, font = 1, cex = 1.5, col = text_col)
-  
-  #rasterImage(logo,usr[1] + 0.01 * xwidth, usr[3] + 0.03 * yheight,
-  #            usr[1] + 0.38 * xwidth, usr[3] + 0.09 * yheight)
-  dev.off()
-}
+# library(raster)
+# library(readxl)
+# library(dplyr)
+# library(plyr)
+# library(tidyverse)
+# library(sf)
+# library(raster)
+# library(RColorBrewer)
+# library(here)
+# library(leaflet)
+# library(png)
+# library(fields)
+# 
+# load("raster_setup.RData")
+# 
+# here("R") %>% 
+#   list.files(full.names = TRUE) %>% 
+#   walk(source)
+# 
+# # natural earth political boundaries
+# ne_land <- read_sf("data/ne-land.gpkg") %>% st_geometry()
+# ne_country_lines <- read_sf("data/ne-country-lines.gpkg") %>% st_geometry()
+# ne_state_lines <- read_sf("data/ne-state-lines.gpkg") %>% st_geometry()
+# 
+# 
+# idx.r <- nb.stack[[1]]
+# idx.r[] <- 1:length(nb.stack[[1]][])
+# 
+# figs <- read_xlsx("Paper 2 data for figures_updated.xlsx")
+# 
+# figs2 <- mutate(figs,
+#        Fig1a = ifelse(Fig1a.Diversity.high.priority == 1, 3, ifelse(Fig1a.Diversity.mod.priority == 1, 2, 1)),
+#        Fig1b = ifelse(Fig1b.Med.declines.high.priority == 1, 3, ifelse(Fig1b.Med.declines.mod.priority  == 1, 2, 1)),
+#        Fig1c = ifelse(Fig1c.No.declining.high.priority == 1, 3, ifelse(Fig1c.No.declining.mod.priority   == 1, 2, 1)),
+#        
+#        Fig2a = ifelse(Fig2a.Overlap.diversity.med.decline.high == 1, 3, ifelse(Fig2a.Overlap.diversity.med.decline.mod == 1, 2, 1)),
+#        Fig2b = ifelse(Fig2b.Overlap.diversity.no.decline.high == 1, 3, ifelse(Fig2b.Overlap.diversity.no.decline.mod == 1, 2, 1)),
+#        Fig2c = ifelse(Fig2c.Overlap.med.decline.no.decline.high == 1, 3, ifelse(Fig2c.Overlap.med.decline.no.decline.mod   == 1, 2, 1))
+# )
+# 
+# idx.df <- data.frame(idx = idx.r[])
+# idx.df <- join(idx.df, figs2, by = "idx")
+# 
+# fig.r <- idx.r
+# fig.r[] <- idx.df$Fig1a
+# plot(fig.r)
+# 
+# fig.lst <- list()
+# 
+# for(ii in 19:24){
+#   fig.r[] <- idx.df[,ii]
+#   fig.lst[[ii- 18]] <- fig.r
+# }
+# 
+# fig.st <- stack(fig.lst)
+# names(fig.st) <- c("Fig1a", "Fig1b", "Fig1c", "Fig2a", "Fig2b", "Fig2c")
+# 
+# 
+# # process for visualization
+# crs <- "+proj=moll +lon_0=-90 +x_0=0 +y_0=0 +ellps=WGS84"
+# abd_plot <- fig.st %>% 
+#   stem_to_na() %>% 
+#   projectRaster(crs = crs) %>% 
+#   sqrt() %>% 
+#   stem_crop()
+# # remove migration cells covered by abundance in another season
+# #abd_plot[["migration"]] <- mask(abd_plot[["migration"]],
+# #                                calc(abd_plot[[c("breeding", "winter")]], 
+# #                                     mean, na.rm = TRUE),
+# #                                inverse = TRUE)
+# 
+# 
+# # plot
+# e <- extent(abd_plot)
+# text_col <- "black"
+# 
+# fig <- names(abd_plot)
+# palette <- c("Greens", "Blues", "BuPu", "Reds")
+# legend_offsets <- c(0.01, 0.06, 0.11, 0.16)
+# # prepare vector layers
+# land <- st_transform(ne_land, crs = crs)
+# country <- st_transform(ne_country_lines, crs = crs)
+# state <- st_transform(ne_state_lines, crs = crs)
+# 
+# # plot fig
+# for (ii in seq_along(fig)) {
+#   
+#   title <- paste(fig[ii])
+#   # print map
+#   here("out_all_spp/fig", paste0(fig[ii], ".png")) %>% 
+#     png(width = 3000, height = 3000, res = 300)
+#   par(mar = c(0, 0, 0, 0), oma = c(0,0,0,0), bg = "white")
+#   plot(land, col = "grey40", border = NA, xlim = e[1:2], ylim = e[3:4])
+#   
+#   pal <- brewer.pal(3, "Set1")
+#   pal <- colorRampPalette(pal)
+#   #pal <- colorFactor("RdYlBu", domain = NULL)
+#   #pal <- colorQuantile(pal, values(abd_plot[[fig[ii]]]), n = 8, #probs = seq(0, 1, length.out = n + 1),
+#   #              na.color = "#808080", alpha = FALSE, reverse = FALSE)
+#   plot(abd_plot[[gsub(" ", ".",fig[ii])]], add = TRUE, col = pal(256), legend = FALSE, 
+#        maxpixels = ncell(abd_plot))
+#   add_legend(fig[ii], pal, legend_offsets[3], low_high = TRUE,
+#              text_col = text_col)
+#   
+#   # boundaries
+#   plot(state, col = "black", lwd = 0.5, lty = 1, add = TRUE)
+#   plot(country, col = "black", lwd = 1, add = TRUE)
+#   
+#   # title
+#   # plot bounds
+#   usr <- par("usr")
+#   xwidth <- usr[2] - usr[1]
+#   yheight <- usr[4] - usr[3]
+#   # labels
+#   text(x = usr[1] + 0.05 * xwidth, y = usr[3] + 0.21 * yheight,
+#        labels = title, pos = 4, font = 1, cex = 1.5, col = text_col)
+#   
+#   #rasterImage(logo,usr[1] + 0.01 * xwidth, usr[3] + 0.03 * yheight,
+#   #            usr[1] + 0.38 * xwidth, usr[3] + 0.09 * yheight)
+#   dev.off()
+# }
 
 
 
