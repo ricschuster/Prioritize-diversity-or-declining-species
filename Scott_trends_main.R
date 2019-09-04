@@ -48,14 +48,17 @@ if(first){
     setwd(file.path(mainDir, subDir))
   } else {
     dir.create(file.path(here(), STEM_dir))
+    setwd(file.path(here(), STEM_dir))
     osf_retrieve_file("https://osf.io/3qhuv/") %>% 
       osf_download()
+    fl <- list.files()
+    unzip(fl)
+    file.remove(fl)
     
-    setwd(file.path(mainDir, subDir))
-    
+    osf_retrieve_file("https://osf.io/qk73j/") %>% 
+      osf_download()
   }
   
-  setwd("D:/Work_unchanged/eBird/AWS/liberero")
   basedir <- getwd()
   
   trim_r <- raster("srd2016_wh_raster_template_3xagg.tif")
@@ -130,9 +133,6 @@ if(first){
     setwd(basedir)
   }
   
-  #NOTE: that b.list is filtered by nb.list at the moment
-  #This is because the non-breeding range is the one that might be cut-off in eBird predictions
-  
   nb.list.red <- nb.list[sapply(nb.list, function(x) class(x) == "RasterLayer")]
   
   nb.stack <- stack(nb.list.red)
@@ -150,37 +150,30 @@ if(first){
 nms.nb <- names(nb.stack)
 
 if(first){
-  loc <- paste0(owd,"/rast_all_spp/")
+  loc <- here("data","rast_all_spp")
   for(ii in 1:length(nb.list.red)){
-    writeRaster(nb.list.red[[ii]], filename= sprintf("%s%s.tif", loc, nms.nb[ii]), format="GTiff")
+    writeRaster(nb.list.red[[ii]], filename= sprintf("%s/%s.tif", loc, nms.nb[ii]), format="GTiff")
   }
 }
 
 ##########################
 ### Diversity index
 ##########################
-loc2 <- paste0(owd,"/out_all_spp/")
+loc2 <- here("out_all_spp")
 
 if(first){
   library(vegan)
   nb.val <- values(nb.stack)
-  #b.val <- values(b.stack)
-  
+
   nb.val[is.na(nb.val)] <- 0
-  #b.val[is.na(b.val)] <- 0
-  
+
   nb.div <- diversity(nb.val, index="shannon")
-  #b.div <- diversity(b.val, index="shannon")
-  
+
   nb.div.rast <- nb.list[[1]]
-  #b.div.rast <- b.list[[1]]
-  
+
   nb.div.rast[] <- nb.div
-  #b.div.rast[] <- b.div
-  
-  
+
   writeRaster(nb.div.rast, filename=paste(loc2,"NB_Shannon.tif",sep=""), format="GTiff", overwrite=TRUE)
-  #writeRaster(b.div.rast, filename=paste(loc2,"B_Shannon.tif",sep=""), format="GTiff", overwrite=TRUE)
 }
 
 ##########################
