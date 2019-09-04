@@ -173,30 +173,22 @@ if(first){
 
   nb.div.rast[] <- nb.div
 
-  writeRaster(nb.div.rast, filename=paste(loc2,"NB_Shannon.tif",sep=""), format="GTiff", overwrite=TRUE)
+  writeRaster(nb.div.rast, filename=paste(loc2,"/NB_Shannon.tif",sep=""), format="GTiff", overwrite=TRUE)
 }
 
 ##########################
 ### HF 
 ##########################
-
-out_path <- paste0(owd, "/raster_other/")
-HF2009 <- raster(paste(out_path,"HF2009.tif",sep=""))
-HF1993 <- raster(paste(out_path,"HF1993.tif",sep=""))
+# out_path <- here(paste0(owd, "/raster_other/")
+HF2009 <- raster(here("data/raster_other","HF2009.tif"))
+HF1993 <- raster(here("data/raster_other","HF1993.tif"))
 HFchange <- HF2009 - HF1993
-
 
 ##########################
 ### Analysis part I: BBS trend maps
 ##########################
-#b.stack.tmp <- b.stack
 nb.stack.tmp <- nb.stack
 
-#NOTE: Manual remove of species that don't have overwinter observation.
-#to_remove <- c("Black-billed Cuckoo","Black Swift","Bobolink","Chimney Swift","Common Nighthawk",
-#               "Connecticut Warbler","Veery","Yellow-billed Cuckoo")
-
-#comb.red2 <- comb.red[!(comb.red$Species.Name %in% to_remove),]
 comb.red2 <- comb.red
 
 
@@ -218,20 +210,9 @@ for(ii in 1:nlayers(nb.stack.tmp)){
   rm(xx)
 }
 
-#b.mean <- mean(b.stack.tmp, na.rm = TRUE)
 nb.mean <- mean(nb.stack.tmp, na.rm = TRUE)
 
-#b.median <- median(b.stack.tmp, na.rm = TRUE)
-#nb.median <- median(nb.stack.tmp, na.rm = TRUE)
-
-#writeRaster(b.mean, filename=paste(loc2,"B_Mean_trend.tif",sep=""), format="GTiff", overwrite=TRUE)
-writeRaster(nb.mean, filename=paste(loc2,"NB_Mean_trend.tif",sep=""), format="GTiff", overwrite=TRUE)
-
-#b.df <- data.frame(b.stack.tmp[[1]][])
-#for(ii in 2:nlayers(b.stack.tmp)){
-#  b.df[,ii] <- b.stack.tmp[[ii]][]
-#}
-#names(b.df) <- names(b.stack.tmp)
+writeRaster(nb.mean, filename=paste(loc2,"NB_Mean_trend.tif",sep="/"), format="GTiff", overwrite=TRUE)
 
 nb.df <- data.frame(nb.stack.tmp[[1]][])
 for(ii in 2:nlayers(nb.stack.tmp)){
@@ -239,50 +220,26 @@ for(ii in 2:nlayers(nb.stack.tmp)){
 }
 names(nb.df) <- names(nb.stack.tmp)
 
-
-#b.median <- apply(b.df,1, function(x) median(x, na.rm = TRUE))
 nb.median <- apply(nb.df,1, function(x) median(x, na.rm = TRUE))
-
 qu <- c(0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95)
 
-#b.quant <- apply(b.df,1, function(x) quantile(x, probs = qu, na.rm = TRUE))
-#b.quant <- t(b.quant)
 nb.quant <- apply(nb.df,1, function(x) quantile(x, probs = qu, na.rm = TRUE))
 nb.quant <- t(nb.quant)
 
-#b.tmp <- b.mean
 nb.tmp <- nb.mean
 
-#b.tmp[] <- b.median
-#writeRaster(b.tmp, filename=paste(loc2,"B_Median_trend.tif",sep=""), format="GTiff", overwrite=TRUE)
-
 nb.tmp[] <- nb.median
-writeRaster(nb.tmp, filename=paste(loc2,"NB_Median_trend.tif",sep=""), format="GTiff", overwrite=TRUE)
+writeRaster(nb.tmp, filename=paste(loc2,"NB_Median_trend.tif",sep="/"), format="GTiff", overwrite=TRUE)
 
 for(ii in 1:length(qu)){
-  #b.tmp[] <- b.quant[,ii]
   nb.tmp[] <- nb.quant[,ii]
   
-  #writeRaster(b.tmp, filename=paste(loc2,"B_Quant_",qu[ii],"_trend.tif",sep=""), format="GTiff", overwrite=TRUE)
-  writeRaster(nb.tmp, filename=paste(loc2,"NB_Quant_",qu[ii],"_trend.tif",sep=""), format="GTiff", overwrite=TRUE)
-  
+  writeRaster(nb.tmp, filename=paste(loc2,"/NB_Quant_",qu[ii],"_trend.tif",sep=""), format="GTiff", overwrite=TRUE)
 }
 
 
-
-
-#b.trend <- apply(b.df,2, function(x) min(x, na.rm = TRUE))
-#nb.trend <- apply(nb.df,2, function(x) min(x, na.rm = TRUE))
-
 #what trend cutoff should we use
 trend.cut <- -1
-
-#b.df2 <- b.df
-#b.df2[is.na(b.df2)] <- 0
-#b.df2[b.df2 > trend.cut] <- 0
-#b.df2[b.df2 <= trend.cut] <- 1
-
-#b.cut.val <- rowSums(b.df2, na.rm = TRUE)
 
 nb.df2 <- nb.df
 nb.df2[is.na(nb.df2)] <- 0
@@ -291,61 +248,36 @@ nb.df2[nb.df2 <= trend.cut] <- 1
 
 nb.cut.val <- rowSums(nb.df2, na.rm = TRUE)
 
-#b.tmp[] <- b.cut.val
 nb.tmp[] <- nb.cut.val
 
-#writeRaster(b.tmp, filename=paste(loc2,"B_Sum_cutoff_minus_1.tif",sep=""), format="GTiff", overwrite=TRUE)
-writeRaster(nb.tmp, filename=paste(loc2,"NB_Sum_cutoff_minus_1.tif",sep=""), format="GTiff", overwrite=TRUE)
-
-#Could also use some dplyr type stuff to summarize values in a more sophisticated way
+writeRaster(nb.tmp, filename=paste(loc2,"NB_Sum_cutoff_minus_1.tif",sep="/"), format="GTiff", overwrite=TRUE)
 
 
 ##########################
 ### Analysis part I: PIF status
 ##########################
-
-
 nb.stack.tmp.PIF <- nb.stack
 
-#NOTE: Manual remove of species that don't have overwinter observation.
-#to_remove <- c("Black-billed Cuckoo","Black Swift","Bobolink","Chimney Swift","Common Nighthawk",
-#               "Connecticut Warbler","Veery","Yellow-billed Cuckoo")
-
-#comb.red2 <- comb.red[!(comb.red$Species.Name %in% to_remove),]
 comb.red2 <- comb.red
-
 
 for(ii in 1:nlayers(nb.stack.tmp.PIF)){
   
   print(names(nb.stack.tmp.PIF[[ii]]))
   flush.console()
   
-  #vv <- b.stack.tmp[[ii]][]
   xx <- nb.stack.tmp.PIF[[ii]][]
   
-  #vv[!is.na(vv)] <- comb.red2$Annual.Trend..1966.2015.[ii]
   xx[!is.na(xx)] <- comb.red2$`PIF status`[ii]
   
-  #b.stack.tmp[[ii]][] <- vv
   nb.stack.tmp.PIF[[ii]][] <- xx
   
-  rm(vv,xx)
+  rm(xx)
 }
 
-#b.mean <- mean(b.stack.tmp, na.rm = TRUE)
 nb.mean.PIF <- mean(nb.stack.tmp.PIF, na.rm = TRUE)
 
-#b.median <- median(b.stack.tmp, na.rm = TRUE)
-#nb.median <- median(nb.stack.tmp.PIF, na.rm = TRUE)
+writeRaster(nb.mean.PIF, filename=paste(loc2,"NB_Mean_PIF_score.tif",sep="/"), format="GTiff", overwrite=TRUE)
 
-#writeRaster(b.mean, filename=paste(loc2,"B_Mean_trend.tif",sep=""), format="GTiff", overwrite=TRUE)
-writeRaster(nb.mean.PIF, filename=paste(loc2,"NB_Mean_PIF_score.tif",sep=""), format="GTiff", overwrite=TRUE)
-
-#b.df <- data.frame(b.stack.tmp[[1]][])
-#for(ii in 2:nlayers(b.stack.tmp)){
-#  b.df[,ii] <- b.stack.tmp[[ii]][]
-#}
-#names(b.df) <- names(b.stack.tmp)
 
 nb.df.PIF <- data.frame(nb.stack.tmp.PIF[[1]][])
 for(ii in 2:nlayers(nb.stack.tmp.PIF)){
@@ -353,32 +285,22 @@ for(ii in 2:nlayers(nb.stack.tmp.PIF)){
 }
 names(nb.df.PIF) <- names(nb.stack.tmp.PIF)
 
-
-#b.median <- apply(b.df,1, function(x) median(x, na.rm = TRUE))
 nb.median.PIF <- apply(nb.df.PIF,1, function(x) median(x, na.rm = TRUE))
 
 qu <- c(0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95)
 
-#b.quant <- apply(b.df,1, function(x) quantile(x, probs = qu, na.rm = TRUE))
-#b.quant <- t(b.quant)
 nb.quant.PIF <- apply(nb.df.PIF,1, function(x) quantile(x, probs = qu, na.rm = TRUE))
 nb.quant.PIF <- t(nb.quant.PIF)
 
-#b.tmp <- b.mean
 nb.tmp.PIF <- nb.mean.PIF
 
-#b.tmp[] <- b.median
-#writeRaster(b.tmp, filename=paste(loc2,"B_Median_PIF_score.tif",sep=""), format="GTiff", overwrite=TRUE)
-
 nb.tmp.PIF[] <- nb.median.PIF
-writeRaster(nb.tmp.PIF, filename=paste(loc2,"NB_Median_PIF_score.tif",sep=""), format="GTiff", overwrite=TRUE)
+writeRaster(nb.tmp.PIF, filename=paste(loc2,"NB_Median_PIF_score.tif",sep="/"), format="GTiff", overwrite=TRUE)
 
 for(ii in 1:length(qu)){
-  #b.tmp[] <- b.quant[,ii]
   nb.tmp.PIF[] <- nb.quant.PIF[,ii]
   
-  #writeRaster(b.tmp, filename=paste(loc2,"B_Quant_",qu[ii],"_trend.tif",sep=""), format="GTiff", overwrite=TRUE)
-  writeRaster(nb.tmp.PIF, filename=paste(loc2,"NB_Quant_",qu[ii],"_PIF_score.tif",sep=""), format="GTiff", overwrite=TRUE)
+  writeRaster(nb.tmp.PIF, filename=paste(loc2,"/NB_Quant_",qu[ii],"_PIF_score.tif",sep=""), format="GTiff", overwrite=TRUE)
   
 }
 
@@ -386,39 +308,32 @@ for(ii in 1:length(qu)){
 ### Analysis part II: HF change
 ### For part II we also need to re-run part I with just the 1993-2009 trends
 ##########################
-#b.stack.tmp2 <- b.stack
 nb.stack.tmp2 <- nb.stack
 
-#b.HF.mean <- vector()
 nb.HF.mean <- vector()
 
-for(ii in 1:nlayers(b.stack.tmp2)){
+for(ii in 1:nlayers(nb.stack.tmp2)){
   
-  print(names(b.stack.tmp2[[ii]]))
+  print(names(nb.stack.tmp2[[ii]]))
   flush.console()
   
-  vv <- b.stack.tmp2[[ii]][]
   xx <- nb.stack.tmp2[[ii]][]
   
-  vv[!is.na(vv)] <- HFchange[!is.na(vv)]
   xx[!is.na(xx)] <- HFchange[!is.na(xx)]
   
   
-  b.HF.mean[ii] <- mean(vv, na.rm = TRUE)
   nb.HF.mean[ii] <- mean(xx, na.rm = TRUE)
   
-  names(b.HF.mean)[ii] <- names(b.stack.tmp2[[ii]])
   names(nb.HF.mean)[ii] <- names(nb.stack.tmp2[[ii]])
   
-  rm(vv,xx)
+  rm(xx)
 }
 
-HF.fr <- data.frame(bird = gsub("B_","",names(b.HF.mean)), 
-                    HF_change_B = b.HF.mean, 
+HF.fr <- data.frame(bird = gsub("B_","",names(nb.HF.mean)), 
                     HF_change_NB = nb.HF.mean,
                     BBS_trend_1996_2015 = comb.red2$Annual.Trend..1966.2015.)
 
-write.csv(HF.fr, paste0(loc2,"HF_change.csv"), row.names = FALSE)
+write.csv(HF.fr, paste0(loc2,"/HF_change.csv"), row.names = FALSE)
 
 
 
@@ -427,7 +342,6 @@ write.csv(HF.fr, paste0(loc2,"HF_change.csv"), row.names = FALSE)
 ##########################
 memory.limit(200000)
 
-#in_path <- "D:/Work/LiberEro/_Project/ESA/LC_detail/"
 in_path2 <- "D:/Work/LiberEro/_Project/ESA/"
 in_path3 <- "D:/Work/LiberEro/_Project/ESA/LC_detail_paper2/"
 out_path <- "D:/Work/LiberEro/_Project/_MS2_Scott_trends/Scott_trends/out_all_spp/"
