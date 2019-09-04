@@ -705,41 +705,38 @@ gc()
 ########
 ### WDPA
 ########
-#library(foreign)
+library(foreign)
 
-#WDPA.med <- data.frame(Value=raster(paste0(out_path,"WDPA.tif"))[])
-#WDPA.df <- read.dbf("raster_other/WDPA_1km.tif.vat.dbf", as.is = T)
-#WDPA.med <- join(WDPA.med, WDPA.df, by = "Value")
+WDPA.med <- data.frame(Value=raster(here("data/raster_other/","WDPA.tif"))[])
+WDPA.df <- read.dbf(here("data/raster_other", "WDPA_1km.tif.vat.dbf"), as.is = T)
+WDPA.med <- join(WDPA.med, WDPA.df, by = "Value")
 
 if(first){
   WDPA.r <- raster(here("data/raster_other/","WDPA.tif"))
   levels(WDPA.r)<- WDPA.df$IUCN_CAT
   r_list <- list()
+  out_path <- here("data/raster_other/")
   
   for(ii in 1:7){
     tmp.r <- WDPA.r
     tmp.r[] <- NA #mask(WDPA.r, WDPA.r != ii, maskvalue=1)
-    writeRaster(tmp.r, filename=paste0(out_path,"WDPA_", WDPA.df$IUCN_CAT[ii], ".tif"), format="GTiff", overwrite=TRUE)
+    writeRaster(tmp.r, filename=paste0(out_path,"/WDPA_", WDPA.df$IUCN_CAT[ii], ".tif"), format="GTiff", overwrite=TRUE)
     
     system(paste("gdalwarp -r average"
-                 ,paste0(out_path,"WDPA_", WDPA.df$IUCN_CAT[ii], "_1km.tif")
-                 ,paste0(out_path,"WDPA_", WDPA.df$IUCN_CAT[ii], ".tif"),sep=" "))
+                 ,paste0(out_path,"/WDPA_", WDPA.df$IUCN_CAT[ii], "_1km.tif")
+                 ,paste0(out_path,"/WDPA_", WDPA.df$IUCN_CAT[ii], ".tif"),sep=" "))
     rm(tmp.r)
   }
 }
 
-WDPA_Ia <- raster(paste0(out_path,"WDPA_Ia.tif"))
-WDPA_Ib <- raster(paste0(out_path,"WDPA_Ib.tif"))
-WDPA_II <- raster(paste0(out_path,"WDPA_II.tif"))
-WDPA_III <- raster(paste0(out_path,"WDPA_III.tif"))
-WDPA_IV <- raster(paste0(out_path,"WDPA_IV.tif"))
-WDPA_V <- raster(paste0(out_path,"WDPA_V.tif"))
-WDPA_VI <- raster(paste0(out_path,"WDPA_VI.tif"))
+WDPA_Ia <- raster(here("data/raster_other/","WDPA_Ia.tif"))
+WDPA_Ib <- raster(here("data/raster_other/","WDPA_Ib.tif"))
+WDPA_II <- raster(here("data/raster_other/","WDPA_II.tif"))
+WDPA_III <- raster(here("data/raster_other/","WDPA_III.tif"))
+WDPA_IV <- raster(here("data/raster_other/","WDPA_IV.tif"))
+WDPA_V <- raster(here("data/raster_other/","WDPA_V.tif"))
+WDPA_VI <- raster(here("data/raster_other/","WDPA_VI.tif"))
 
-#rr <- raster(paste0(out_path,"WDPA_", WDPA.df$IUCN_CAT[ii], "_1km.tif"))
-#zz <- raster(paste0(out_path,"Index_raster.tif"))
-#rr <- try(extend(rr, zz))
-#dd <- zonal(rr, zz, 'sum', na.rm = TRUE)
 
 ########
 ### create csv.df
@@ -770,54 +767,55 @@ csv.df <- data.frame(idx = r.pts@data,
 )#,                
 #ss)
 
-csv.df <- join(csv.df, out_df_spread, by = "idx")
+# csv.df <- join(csv.df, out_df_spread, by = "idx")
 
 csv.df.red <- csv.df[!is.na(csv.df$median.decl),]
 
 csv.df.red$flag <- 1
 
-write.csv(csv.df.red, "csv.df.WDPA.csv", row.names = F)
-
-idx.df <- data.frame(idx = idx.r[])
-idx.df <- join(idx.df, csv.df.red, by = "idx")
-
-idx.r2 <- idx.r
-idx.r2[] <- idx.df$flag
-
-idx.r3 <- idx.r
-csv.df2 <- csv.df
-names(csv.df2)[1] <- "ID"
-levels(idx.r3) <- csv.df2
-
-writeRaster(idx.r2, filename=paste0(out_path,"Index_raster_flag.tif"), format="GTiff", overwrite=TRUE)
-#not run as this takes forever
-#writeRaster(idx.r3, filename=paste0(out_path,"Index_raster_atr_table.tif"), format="GTiff", overwrite=TRUE)
-
-# csv.df analysis
-library(tidyverse)
-csv.df <- read.csv("csv.df.csv")
-
-str(csv.df)
-
-#keep only rows that represent the top 10% of diversity values
-cutoff <- quantile(csv.df$diversity, probs = c(0.25, 0.5, 0.75, 0.9))
-csv.df.red <- csv.df[csv.df$diversity > cutoff[4],]
-
-#not sure how useful this is, but here the setup to group by a variable and create summaries
-test <- csv.df.red %>% group_by(spp.decl) %>% summarise(count = n(),
-                                                        med.decl = mean(median.decl))
-print(test, n = nrow(test))
+# write.csv(csv.df.red, "csv.df.WDPA.csv", row.names = F)
+# 
+# idx.df <- data.frame(idx = idx.r[])
+# idx.df <- join(idx.df, csv.df.red, by = "idx")
+# 
+# idx.r2 <- idx.r
+# idx.r2[] <- idx.df$flag
+# 
+# idx.r3 <- idx.r
+# csv.df2 <- csv.df
+# names(csv.df2)[1] <- "ID"
+# levels(idx.r3) <- csv.df2
+# 
+# writeRaster(idx.r2, filename=paste0(out_path,"Index_raster_flag.tif"), format="GTiff", overwrite=TRUE)
+# #not run as this takes forever
+# #writeRaster(idx.r3, filename=paste0(out_path,"Index_raster_atr_table.tif"), format="GTiff", overwrite=TRUE)
+# 
+# # csv.df analysis
+# library(tidyverse)
+# csv.df <- read.csv("csv.df.csv")
+# 
+# str(csv.df)
+# 
+# #keep only rows that represent the top 10% of diversity values
+# cutoff <- quantile(csv.df$diversity, probs = c(0.25, 0.5, 0.75, 0.9))
+# csv.df.red <- csv.df[csv.df$diversity > cutoff[4],]
+# 
+# #not sure how useful this is, but here the setup to group by a variable and create summaries
+# test <- csv.df.red %>% group_by(spp.decl) %>% summarise(count = n(),
+#                                                         med.decl = mean(median.decl))
+# print(test, n = nrow(test))
 
 ####################################################################################
 ### Land cover change
 ####################################################################################
-first <- 0
 
-lc_in <- "D:/Work/LiberEro/_Project/_MS2_Scott_trends/Scott_trends/land_use/SSPs_may2017/"
-out_path <- "D:/Work/LiberEro/_Project/_MS2_Scott_trends/Scott_trends/raster_other/"
-setwd(lc_in)
 
 if(first){
+  
+  lc_in <- "D:/Work/LiberEro/_Project/_MS2_Scott_trends/Scott_trends/land_use/SSPs_may2017/"
+  out_path <- "D:/Work/LiberEro/_Project/_MS2_Scott_trends/Scott_trends/raster_other/"
+  setwd(lc_in)
+  
   fls <- list.files(pattern = ".asc")
   tt <- stack(x = fls)
   pr <- "+proj=eck4 +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
@@ -834,20 +832,17 @@ if(first){
   }
 }
 
-setwd(out_path)
+setwd(here("data/raster_other/"))
 fls <- c("ssp1_year_50.tif", "ssp2_year_50.tif", "ssp3_year_50.tif", "year_2000.tif")
 tt2 <- as.data.frame(stack(fls))
-idx <- as.data.frame(raster("Index_raster.tif"))
+idx <- as.data.frame(raster(here("data/raster_other","Index_raster.tif")))
 
 lc.df <- data.frame(idx = idx, tt2)
 names(lc.df)[1] <- "idx"
 
-setwd(owd)
-csv.df <- read.csv("csv.df.csv")
+csv.df.lc <- join(csv.df.red, lc.df, by = "idx")
 
-csv.df.lc <- join(csv.df[,1:11], lc.df, by = "idx")
-
-write.csv(csv.df.lc, "csv.df.land_change.csv", row.names = FALSE)
+write.csv(csv.df.lc, here("csv.df.land_change.csv"), row.names = FALSE)
 
 ####################################################################################
 ### Figures
