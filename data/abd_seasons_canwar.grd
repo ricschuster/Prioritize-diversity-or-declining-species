@@ -1,0 +1,25 @@
+[general]
+creator=R package 'raster'
+created=2018-02-28 23:31:08
+[georeference]
+nrows=990
+ncols=798
+xmin=-11083366.8047829
+ymin=-1478894.19115047
+xmax=-4428342.94458186
+ymax=6777338.41736957
+projection=+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs
+[data]
+datatype=FLT4S
+byteorder=little
+nbands=3
+bandorder=BIL
+minvalue=0:0:0
+maxvalue=1.12887318420785:0.542228154380116:1.88071304964701
+nodatavalue=-3.4e+38
+[legend]
+legendtype=
+values=
+color=
+[description]
+layername=winter:migration:breeding
