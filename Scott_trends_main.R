@@ -603,37 +603,6 @@ writeRaster(comb, filename=here("out_all_spp","Sh_BBS_neg_sqrt.tif"), format="GT
 ### setup csv for Scott
 ##########################
 
-
-########
-#diversity
-library(vegan)
-nb.val <- values(nb.stack)
-nb.val[is.na(nb.val)] <- 0
-nb.div <- diversity(nb.val, index="shannon")
-
-########
-#median trend
-nb.stack.tmp <- nb.stack
-comb.red2 <- comb.red
-
-for(ii in 1:nlayers(nb.stack.tmp)){
-  xx <- nb.stack.tmp[[ii]][]
-  xx[!is.na(xx)] <- comb.red2$Annual.Trend..1966.2015.[ii]
-  nb.stack.tmp[[ii]][] <- xx
-  rm(xx)
-}
-
-nb.mean <- mean(nb.stack.tmp, na.rm = TRUE)
-
-nb.df <- data.frame(nb.stack.tmp[[1]][])
-for(ii in 2:nlayers(nb.stack.tmp)){
-  nb.df[,ii] <- nb.stack.tmp[[ii]][]
-}
-names(nb.df) <- names(nb.stack.tmp)
-
-nb.median <- apply(nb.df,1, function(x) median(x, na.rm = TRUE))
-
-
 ss <- as.data.frame(stack(nb.df))
 ss2 <- nb.df
 ss2[is.na(ss2)] <- 0
@@ -643,31 +612,25 @@ n.spp <- apply(ss2, 1, function(row)  sum(row != 0))
 
 ########
 ### HF
-out_path <- paste0(owd, "/raster_other/")
-
-HF93 <- raster("D:/Work/LiberEro/_Project/HF/Maps/HFP1993.tif")
-HF09 <- raster("D:/Work/LiberEro/_Project/HF/Maps/HFP2009.tif")
-
 if(first){
   
-  HF.delta <- HF09 - HF93
-  
-  writeRaster(HF.delta, filename=paste0(out_path,"HF_delta_1km.tif"), format="GTiff", overwrite=TRUE)
-  
-  
+  writeRaster(HFchange, filename = here("data/raster_other/","HF_delta_1km.tif"), format="GTiff", overwrite=TRUE)
+  writeRaster(HFchange, filename = here("data/raster_other/","HF_change_mean.tif"), format="GTiff", overwrite=TRUE)
+  writeRaster(HFchange, filename = here("data/raster_other/", "HF_change_median.tif"), format="GTiff", overwrite=TRUE)
+ 
   system(paste("gdalwarp -r average"
-               ,paste0(out_path,"HF_delta_1km.tif")
-               ,paste0(out_path,"HF_change_mean.tif"),sep=" "))
+               ,here("data/raster_other/","HF_delta_1km.tif")
+               ,here("data/raster_other/","HF_change_mean.tif"),sep=" "))
   
   system(paste("gdalwarp -r med"
-               ,paste0(out_path,"HF_delta_1km.tif")
-               ,paste0(out_path,"HF_change_median.tif"),sep=" "))
-  
+               ,here("data/raster_other/", "HF_delta_1km.tif")
+               ,here("data/raster_other/", "HF_change_median.tif"),sep=" "))
+
 }
 
-HF.delta.mean <- raster(paste0(out_path,"HF_change_mean.tif"))[]
+HF.delta.mean <- raster(here("data/raster_other/","HF_change_mean.tif"))[]
 HF.delta.mean[HF.delta.mean < -100] <- 0
-HF.delta.median <- raster(paste0(out_path,"HF_change_median.tif"))[]
+HF.delta.median <- raster(here("data/raster_other/","HF_change_median.tif"))[]
 HF.delta.median[HF.delta.median < -100] <- 0
 
 gc()
@@ -749,7 +712,7 @@ gc()
 #WDPA.med <- join(WDPA.med, WDPA.df, by = "Value")
 
 if(first){
-  WDPA.r <- raster(paste0(out_path,"WDPA.tif"))
+  WDPA.r <- raster(here("data/raster_other/","WDPA.tif"))
   levels(WDPA.r)<- WDPA.df$IUCN_CAT
   r_list <- list()
   
