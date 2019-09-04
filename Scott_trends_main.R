@@ -340,208 +340,213 @@ write.csv(HF.fr, paste0(loc2,"/HF_change.csv"), row.names = FALSE)
 ##########################
 ### ESA landcover analysis
 ##########################
-memory.limit(200000)
-
-in_path2 <- "D:/Work/LiberEro/_Project/ESA/"
-in_path3 <- "D:/Work/LiberEro/_Project/ESA/LC_detail_paper2/"
-out_path <- "D:/Work/LiberEro/_Project/_MS2_Scott_trends/Scott_trends/out_all_spp/"
-
-ESA.leg <- read.csv(paste0(in_path2,"ESACCI-LC-Legend.csv"),sep=";")
-
-ESA.raw <- raster(paste(in_path2,"ESACCI-LC-L4-LCCS-Map-300m_2015_clip.tif",sep=""))
-
-if(first){
-  system(paste("gdalwarp -r near"
-               ,paste0(out_path,"NB_Shannon.tif")
-               ,paste0(in_path3,"diversity.tif"),sep=" "))
-  
-  system(paste("gdalwarp -r near"
-               ,paste0(out_path,"NB_Median_trend.tif")
-               ,paste0(in_path3,"BBS.tif"),sep=" "))
-  
-  system(paste("gdalwarp -r near"
-               ,paste0(out_path,"NB_Median_PIF_score.tif")
-               ,paste0(in_path3,"PIF.tif"),sep=" "))
-  
-}
-
-Shannon <- raster(paste0(in_path3,"diversity.tif"))
-BBS <- raster(paste0(in_path3,"BBS.tif"))
-PIF <- raster(paste0(in_path3,"PIF.tif"))
-
-LC <- stack(c(ESA.raw,Shannon,BBS,PIF))
-
-out_l <- list()
-for(dd in 1:nlayers(LC)){
-  rr <- LC[[dd]]
-  nr <- nrow(rr)
-  nc <- ncol(rr)
-  #mm <- matrix(nrow = nr, ncol = nc)
-  cnt <- 1
-  for(ii in 1:nrow(rr)){
-    
-    if(!(ii %% 10000)){
-      vec_tmp <- getValues(rr, (ii-9999), 10000)
-      print(ii)
-      flush.console()
-      if(cnt == 1){
-        vec <- vec_tmp
-        cnt <- 2
-      } else{
-        vec <- c(vec, vec_tmp)
-      }
-    }
-    
-  }
-  vec <- c(vec,getValues(rr, (ii-ii %% 10000), (ii %% 10000)))
-  
-  out_l[[dd]] <- vec
-  names(out_l)[dd] <- names(rr)
-}
-
-rm(list=ls()[! ls() %in% c("out_l","ESA.leg")])
-gc()
-
-out_l_red <- list()
-for(ll in 1:2){
-  out_l_red[[ll]] <- out_l[[ll]][!is.na(out_l[[1]]) & out_l[[1]] != 210]
-}
-
-names(out_l_red) <- c("NB_LAB", "idx")
-out_df <- as_data_frame(out_l_red)
-
-outdf_red <- out_df[out_df$PIF > 0,]
-
-Div_q <- quantile(outdf_red$Shannon, probs = c(0.2, 0.4, 0.6, 0.8))
-BBS_q <- quantile(outdf_red$BBS, probs = c(0.2, 0.4, 0.6, 0.8))
-PIF_q <- quantile(outdf_red$PIF, probs = c(0.2, 0.4, 0.6, 0.8))
-
-lc_df <- outdf_red %>% group_by(NB_LAB) %>% 
-  dplyr::summarise(
-    cells = n(),
-    Div_low = sum(Shannon <= Div_q[1]),
-    Div_med_low = sum(Shannon > Div_q[1] & Shannon <= Div_q[2]),
-    Div_med = sum(Shannon > Div_q[2] & Shannon <= Div_q[3]),
-    Div_med_high = sum(Shannon > Div_q[3] & Shannon <= Div_q[4]),
-    Div_high = sum(Shannon > Div_q[4]),
-    
-    BBS_low = sum(BBS <= BBS_q[1]),
-    BBS_med_low = sum(BBS > BBS_q[1] & BBS <= BBS_q[2]),
-    BBS_med = sum(BBS > BBS_q[2] & BBS <= BBS_q[3]),
-    BBS_med_high = sum(BBS > BBS_q[3] & BBS <= BBS_q[4]),
-    BBS_high = sum(BBS > BBS_q[4]),
-    
-    PIF_low = sum(PIF <= PIF_q[1]),
-    PIF_med_low = sum(PIF > PIF_q[1] & PIF <= PIF_q[2]),
-    PIF_med = sum(PIF > PIF_q[2] & PIF <= PIF_q[3]),
-    PIF_med_high = sum(PIF > PIF_q[3] & PIF <= PIF_q[4]),
-    PIF_high = sum(PIF > PIF_q[4])
-    
-  )
-lc_df <- join(lc_df, ESA.leg, by="NB_LAB")
-
-write.csv(lc_df, "./out_all_spp/LC_div_BBS_PIF_df.csv", row.names = FALSE)
-
-tt <- lc_df[,c(2:7,18)]
-tt2 <- gather(tt, Class, value, -LCCOwnLabel, -cells)
-tt2$perc <- tt2$value/tt2$cells*100
-
-ggplot(data=tt2, aes(x=LCCOwnLabel, y=perc, fill=Class)) +
-  geom_bar(stat="identity") + coord_flip()
-
-
-tt <- lc_df[,c(2,8:12,18)]
-tt2 <- gather(tt, Class, value, -LCCOwnLabel, -cells)
-tt2$perc <- tt2$value/tt2$cells*100
-
-ggplot(data=tt2, aes(x=LCCOwnLabel, y=perc, fill=Class)) +
-  geom_bar(stat="identity") + coord_flip()
-
-
-tt <- lc_df[,c(2,13:18)]
-tt2 <- gather(tt, Class, value, -LCCOwnLabel, -cells)
-tt2$perc <- tt2$value/tt2$cells*100
-
-ggplot(data=tt2, aes(x=LCCOwnLabel, y=perc, fill=Class)) +
-  geom_bar(stat="identity") + coord_flip()
-
-##########################
-### Ecoregion analysis
-##########################
-ecor_path <- "D:/Work/LiberEro/_Project/Ecoregions/rast/"
-out_path <- "D:/Work/LiberEro/_Project/_MS2_Scott_trends/Scott_trends/out_all_spp/"
-
-ECO_ID <- read.dbf("D:/Work/LiberEro/_Project/Ecoregions/ecoregions_clipped_to_study_extent.dbf")
-ECO_ID_NAME <- ECO_ID %>% group_by(ECO_ID) %>% dplyr::summarise(ECO_NAME = first(ECO_NAME))
-
-
-shann <- raster(paste0(out_path,"NB_Shannon.tif"))
-BBS <- raster(paste0(out_path,"NB_Median_trend.tif"))             
-PIF <- raster(paste0(out_path,"NB_Median_PIF_score.tif"))
-
-
-
-if(first){
-  ecor <- raster(paste0(ecor_path,"LE_ecoregions.tif"))
-  ecor[] <- NA
-  writeRaster(ecor, filename=paste0(ecor_path,"LE_ecoregions.tif"), format="GTiff", overwrite=TRUE)             
-  
-  system(paste("gdalwarp -r near"
-               ,paste0(ecor_path,"ecoregions_clipped_to_study_extent_diss_by_ECO_ID_proj.tif")
-               ,paste0(ecor_path,"LE_ecoregions.tif"),sep=" "))
-}
-
-ecor <- raster(paste0(ecor_path,"LE_ecoregions.tif"))
-
-stack_df <- as.data.frame(stack(c(ecor,shann,BBS,PIF)))
-stdf_red <-drop_na(stack_df)
-
-names(stdf_red) <- c("ECO_ID", "Shannon", "BBS", "PIF")
-
-
-Div_q <- quantile(stdf_red$Shannon, probs = c(0.2, 0.4, 0.6, 0.8))
-BBS_q <- quantile(stdf_red$BBS, probs = c(0.2, 0.4, 0.6, 0.8))
-PIF_q <- quantile(stdf_red$PIF, probs = c(0.2, 0.4, 0.6, 0.8))
-
-ecor_df <- stdf_red %>% group_by(ECO_ID) %>% 
-  dplyr::summarise(
-    cells = n(),
-    Div_low = sum(Shannon <= Div_q[1]),
-    Div_med_low = sum(Shannon > Div_q[1] & Shannon <= Div_q[2]),
-    Div_med = sum(Shannon > Div_q[2] & Shannon <= Div_q[3]),
-    Div_med_high = sum(Shannon > Div_q[3] & Shannon <= Div_q[4]),
-    Div_high = sum(Shannon > Div_q[4]),
-    
-    BBS_low = sum(BBS <= BBS_q[1]),
-    BBS_med_low = sum(BBS > BBS_q[1] & BBS <= BBS_q[2]),
-    BBS_med = sum(BBS > BBS_q[2] & BBS <= BBS_q[3]),
-    BBS_med_high = sum(BBS > BBS_q[3] & BBS <= BBS_q[4]),
-    BBS_high = sum(BBS > BBS_q[4]),
-    
-    PIF_low = sum(PIF <= PIF_q[1]),
-    PIF_med_low = sum(PIF > PIF_q[1] & PIF <= PIF_q[2]),
-    PIF_med = sum(PIF > PIF_q[2] & PIF <= PIF_q[3]),
-    PIF_med_high = sum(PIF > PIF_q[3] & PIF <= PIF_q[4]),
-    PIF_high = sum(PIF > PIF_q[4])
-    
-  )
-ecor_df <- join(ecor_df, ECO_ID_NAME, by="ECO_ID")
-
-write.csv(ecor_df, "./out_all_spp/Ecoregion_df.csv", row.names = FALSE)
-
-tt <- ecor_df[1:20,c(2,13:18)]
-tt2 <- gather(tt, Class, value, -ECO_NAME, -cells)
-tt2$perc <- tt2$value/tt2$cells*100
-
-ggplot(data=tt2, aes(x=ECO_NAME, y=perc, fill=Class)) +
-  geom_bar(stat="identity") + coord_flip()
+# memory.limit(200000)
+# 
+# in_path2 <- "D:/Work/LiberEro/_Project/ESA/"
+# in_path3 <- "D:/Work/LiberEro/_Project/ESA/LC_detail_paper2/"
+# out_path <- "D:/Work/LiberEro/_Project/_MS2_Scott_trends/Scott_trends/out_all_spp/"
+# 
+# ESA.leg <- read.csv(paste0(in_path2,"ESACCI-LC-Legend.csv"),sep=";")
+# 
+# ESA.raw <- raster(paste(in_path2,"ESACCI-LC-L4-LCCS-Map-300m_2015_clip.tif",sep=""))
+# 
+# if(first){
+#   system(paste("gdalwarp -r near"
+#                ,paste0(out_path,"NB_Shannon.tif")
+#                ,paste0(in_path3,"diversity.tif"),sep=" "))
+#   
+#   system(paste("gdalwarp -r near"
+#                ,paste0(out_path,"NB_Median_trend.tif")
+#                ,paste0(in_path3,"BBS.tif"),sep=" "))
+#   
+#   system(paste("gdalwarp -r near"
+#                ,paste0(out_path,"NB_Median_PIF_score.tif")
+#                ,paste0(in_path3,"PIF.tif"),sep=" "))
+#   
+# }
+# 
+# Shannon <- raster(paste0(in_path3,"diversity.tif"))
+# BBS <- raster(paste0(in_path3,"BBS.tif"))
+# PIF <- raster(paste0(in_path3,"PIF.tif"))
+# 
+# LC <- stack(c(ESA.raw,Shannon,BBS,PIF))
+# 
+# out_l <- list()
+# for(dd in 1:nlayers(LC)){
+#   rr <- LC[[dd]]
+#   nr <- nrow(rr)
+#   nc <- ncol(rr)
+#   #mm <- matrix(nrow = nr, ncol = nc)
+#   cnt <- 1
+#   for(ii in 1:nrow(rr)){
+#     
+#     if(!(ii %% 10000)){
+#       vec_tmp <- getValues(rr, (ii-9999), 10000)
+#       print(ii)
+#       flush.console()
+#       if(cnt == 1){
+#         vec <- vec_tmp
+#         cnt <- 2
+#       } else{
+#         vec <- c(vec, vec_tmp)
+#       }
+#     }
+#     
+#   }
+#   vec <- c(vec,getValues(rr, (ii-ii %% 10000), (ii %% 10000)))
+#   
+#   out_l[[dd]] <- vec
+#   names(out_l)[dd] <- names(rr)
+# }
+# 
+# rm(list=ls()[! ls() %in% c("out_l","ESA.leg")])
+# gc()
+# 
+# out_l_red <- list()
+# for(ll in 1:2){
+#   out_l_red[[ll]] <- out_l[[ll]][!is.na(out_l[[1]]) & out_l[[1]] != 210]
+# }
+# 
+# names(out_l_red) <- c("NB_LAB", "idx")
+# out_df <- as_data_frame(out_l_red)
+# 
+# outdf_red <- out_df[out_df$PIF > 0,]
+# 
+# Div_q <- quantile(outdf_red$Shannon, probs = c(0.2, 0.4, 0.6, 0.8))
+# BBS_q <- quantile(outdf_red$BBS, probs = c(0.2, 0.4, 0.6, 0.8))
+# PIF_q <- quantile(outdf_red$PIF, probs = c(0.2, 0.4, 0.6, 0.8))
+# 
+# lc_df <- outdf_red %>% group_by(NB_LAB) %>% 
+#   dplyr::summarise(
+#     cells = n(),
+#     Div_low = sum(Shannon <= Div_q[1]),
+#     Div_med_low = sum(Shannon > Div_q[1] & Shannon <= Div_q[2]),
+#     Div_med = sum(Shannon > Div_q[2] & Shannon <= Div_q[3]),
+#     Div_med_high = sum(Shannon > Div_q[3] & Shannon <= Div_q[4]),
+#     Div_high = sum(Shannon > Div_q[4]),
+#     
+#     BBS_low = sum(BBS <= BBS_q[1]),
+#     BBS_med_low = sum(BBS > BBS_q[1] & BBS <= BBS_q[2]),
+#     BBS_med = sum(BBS > BBS_q[2] & BBS <= BBS_q[3]),
+#     BBS_med_high = sum(BBS > BBS_q[3] & BBS <= BBS_q[4]),
+#     BBS_high = sum(BBS > BBS_q[4]),
+#     
+#     PIF_low = sum(PIF <= PIF_q[1]),
+#     PIF_med_low = sum(PIF > PIF_q[1] & PIF <= PIF_q[2]),
+#     PIF_med = sum(PIF > PIF_q[2] & PIF <= PIF_q[3]),
+#     PIF_med_high = sum(PIF > PIF_q[3] & PIF <= PIF_q[4]),
+#     PIF_high = sum(PIF > PIF_q[4])
+#     
+#   )
+# lc_df <- join(lc_df, ESA.leg, by="NB_LAB")
+# 
+# write.csv(lc_df, "./out_all_spp/LC_div_BBS_PIF_df.csv", row.names = FALSE)
+# 
+# tt <- lc_df[,c(2:7,18)]
+# tt2 <- gather(tt, Class, value, -LCCOwnLabel, -cells)
+# tt2$perc <- tt2$value/tt2$cells*100
+# 
+# ggplot(data=tt2, aes(x=LCCOwnLabel, y=perc, fill=Class)) +
+#   geom_bar(stat="identity") + coord_flip()
+# 
+# 
+# tt <- lc_df[,c(2,8:12,18)]
+# tt2 <- gather(tt, Class, value, -LCCOwnLabel, -cells)
+# tt2$perc <- tt2$value/tt2$cells*100
+# 
+# ggplot(data=tt2, aes(x=LCCOwnLabel, y=perc, fill=Class)) +
+#   geom_bar(stat="identity") + coord_flip()
+# 
+# 
+# tt <- lc_df[,c(2,13:18)]
+# tt2 <- gather(tt, Class, value, -LCCOwnLabel, -cells)
+# tt2$perc <- tt2$value/tt2$cells*100
+# 
+# ggplot(data=tt2, aes(x=LCCOwnLabel, y=perc, fill=Class)) +
+#   geom_bar(stat="identity") + coord_flip()
+# 
+# ##########################
+# ### Ecoregion analysis
+# ##########################
+# ecor_path <- "D:/Work/LiberEro/_Project/Ecoregions/rast/"
+# out_path <- "D:/Work/LiberEro/_Project/_MS2_Scott_trends/Scott_trends/out_all_spp/"
+# 
+# ECO_ID <- read.dbf("D:/Work/LiberEro/_Project/Ecoregions/ecoregions_clipped_to_study_extent.dbf")
+# ECO_ID_NAME <- ECO_ID %>% group_by(ECO_ID) %>% dplyr::summarise(ECO_NAME = first(ECO_NAME))
+# 
+# 
+# shann <- raster(paste0(out_path,"NB_Shannon.tif"))
+# BBS <- raster(paste0(out_path,"NB_Median_trend.tif"))             
+# PIF <- raster(paste0(out_path,"NB_Median_PIF_score.tif"))
+# 
+# 
+# 
+# if(first){
+#   ecor <- raster(paste0(ecor_path,"LE_ecoregions.tif"))
+#   ecor[] <- NA
+#   writeRaster(ecor, filename=paste0(ecor_path,"LE_ecoregions.tif"), format="GTiff", overwrite=TRUE)             
+#   
+#   system(paste("gdalwarp -r near"
+#                ,paste0(ecor_path,"ecoregions_clipped_to_study_extent_diss_by_ECO_ID_proj.tif")
+#                ,paste0(ecor_path,"LE_ecoregions.tif"),sep=" "))
+# }
+# 
+# ecor <- raster(paste0(ecor_path,"LE_ecoregions.tif"))
+# 
+# stack_df <- as.data.frame(stack(c(ecor,shann,BBS,PIF)))
+# stdf_red <-drop_na(stack_df)
+# 
+# names(stdf_red) <- c("ECO_ID", "Shannon", "BBS", "PIF")
+# 
+# 
+# Div_q <- quantile(stdf_red$Shannon, probs = c(0.2, 0.4, 0.6, 0.8))
+# BBS_q <- quantile(stdf_red$BBS, probs = c(0.2, 0.4, 0.6, 0.8))
+# PIF_q <- quantile(stdf_red$PIF, probs = c(0.2, 0.4, 0.6, 0.8))
+# 
+# ecor_df <- stdf_red %>% group_by(ECO_ID) %>% 
+#   dplyr::summarise(
+#     cells = n(),
+#     Div_low = sum(Shannon <= Div_q[1]),
+#     Div_med_low = sum(Shannon > Div_q[1] & Shannon <= Div_q[2]),
+#     Div_med = sum(Shannon > Div_q[2] & Shannon <= Div_q[3]),
+#     Div_med_high = sum(Shannon > Div_q[3] & Shannon <= Div_q[4]),
+#     Div_high = sum(Shannon > Div_q[4]),
+#     
+#     BBS_low = sum(BBS <= BBS_q[1]),
+#     BBS_med_low = sum(BBS > BBS_q[1] & BBS <= BBS_q[2]),
+#     BBS_med = sum(BBS > BBS_q[2] & BBS <= BBS_q[3]),
+#     BBS_med_high = sum(BBS > BBS_q[3] & BBS <= BBS_q[4]),
+#     BBS_high = sum(BBS > BBS_q[4]),
+#     
+#     PIF_low = sum(PIF <= PIF_q[1]),
+#     PIF_med_low = sum(PIF > PIF_q[1] & PIF <= PIF_q[2]),
+#     PIF_med = sum(PIF > PIF_q[2] & PIF <= PIF_q[3]),
+#     PIF_med_high = sum(PIF > PIF_q[3] & PIF <= PIF_q[4]),
+#     PIF_high = sum(PIF > PIF_q[4])
+#     
+#   )
+# ecor_df <- join(ecor_df, ECO_ID_NAME, by="ECO_ID")
+# 
+# write.csv(ecor_df, "./out_all_spp/Ecoregion_df.csv", row.names = FALSE)
+# 
+# tt <- ecor_df[1:20,c(2,13:18)]
+# tt2 <- gather(tt, Class, value, -ECO_NAME, -cells)
+# tt2$perc <- tt2$value/tt2$cells*100
+# 
+# ggplot(data=tt2, aes(x=ECO_NAME, y=perc, fill=Class)) +
+#   geom_bar(stat="identity") + coord_flip()
 
 
 #####
 # Comb metric
 #####
 
-names(stack_df) <- c("ECO_ID", "Shannon", "BBS", "PIF")
+shann <- raster(here("out_all_spp","NB_Shannon.tif"))
+BBS <- raster(here("out_all_spp","NB_Median_trend.tif"))             
+PIF <- raster(here("out_all_spp","NB_Median_PIF_score.tif"))
+stack_df <- as.data.frame(stack(c(shann,BBS,PIF)))
+
+names(stack_df) <- c("Shannon", "BBS", "PIF")
 
 stack_df$Shannon[is.na(stack_df$BBS)] <- NA
 
@@ -569,29 +574,12 @@ stack_df$comb_score <- 3 * (stack_df$Shannon * stack_df$BBS * stack_df$PIF) /
 hist(stack_df$comb_score)
 comb <- shann
 comb[] <- stack_df$comb_score
-writeRaster(comb, filename=paste0(out_path,"Sh_BBC_PIF_comb.tif"), format="GTiff", overwrite=TRUE)
+writeRaster(comb, filename=here("out_all_spp","Sh_BBC_PIF_comb.tif"), format="GTiff", overwrite=TRUE)
 
 #####
 # Comb metric Shannon BBS
 #####
 
-names(stack_df) <- c("ECO_ID", "Shannon", "BBS", "PIF")
-
-stack_df$Shannon[is.na(stack_df$BBS)] <- NA
-
-stack_df$Shannon <- scale(stack_df$Shannon)
-stack_df$BBS <- scale(stack_df$BBS)
-stack_df$PIF <- scale(stack_df$PIF)
-stack_df$PIF <- stack_df$PIF * -1
-
-
-stack_df$Shannon <- stack_df$Shannon + abs(min(stack_df$Shannon, na.rm = TRUE))
-stack_df$BBS <- stack_df$BBS + abs(min(stack_df$BBS, na.rm = TRUE))
-stack_df$PIF <- stack_df$PIF + abs(min(stack_df$PIF, na.rm = TRUE))
-
-stack_df$Shannon <- stack_df$Shannon/max(stack_df$Shannon, na.rm = TRUE)
-stack_df$BBS <- stack_df$BBS/max(stack_df$BBS, na.rm = TRUE)
-stack_df$PIF <- stack_df$PIF/max(stack_df$PIF, na.rm = TRUE)
 
 stack_df$BBS <- (stack_df$BBS - 1) * -1
 
@@ -609,10 +597,7 @@ hist(stack_df$sqrt_Div_BBS)
 
 comb <- shann
 comb[] <- stack_df$sqrt_Div_BBS
-writeRaster(comb, filename=paste0(out_path,"Sh_BBS_neg_sqrt.tif"), format="GTiff", overwrite=TRUE)
-
-
-
+writeRaster(comb, filename=here("out_all_spp","Sh_BBS_neg_sqrt.tif"), format="GTiff", overwrite=TRUE)
 
 ##########################
 ### setup csv for Scott
@@ -688,71 +673,71 @@ HF.delta.median[HF.delta.median < -100] <- 0
 gc()
 ########
 #LC
-memory.limit(200000)
-in_path2 <- "D:/Work/LiberEro/_Project/ESA/"
-ESA.raw <- raster(paste(in_path2,"ESACCI-LC-L4-LCCS-Map-300m_2015_clip.tif",sep=""))
-
-idx.r <- nb.stack[[1]]
-idx.r[] <- 1:length(nb.stack[[1]][])
-
-if(first){
-  writeRaster(idx.r, filename=paste0(out_path,"Index_raster.tif"), format="GTiff", overwrite=TRUE)
-  
-  
-  system(paste("gdalwarp -r near"
-               ,paste0(out_path,"Index_raster.tif")
-               ,paste0(in_path2,"Index_to_ESA_clip_float.tif"),sep=" "))
-}
-
-ESA.idx <- raster(paste(in_path2,"Index_to_ESA_clip_float.tif",sep=""))
-
-
-LC <- stack(c(ESA.raw,ESA.idx))
-
-out_l <- list()
-for(dd in 1:nlayers(LC)){
-  rr <- LC[[dd]]
-  nr <- nrow(rr)
-  nc <- ncol(rr)
-  mm <- matrix(nrow = nr, ncol = nc)
-  cnt <- 1
-  for(ii in 1:nrow(rr)){
-    
-    if(!(ii %% 10000)){
-      vec_tmp <- getValues(rr, (ii-9999), 10000)
-      print(ii)
-      flush.console()
-      if(cnt == 1){
-        vec <- vec_tmp
-        cnt <- 2
-      } else{
-        vec <- c(vec, vec_tmp)
-      }
-    }
-    
-  }
-  vec <- c(vec,getValues(rr, (ii-ii %% 10000), (ii %% 10000)))
-  
-  out_l[[dd]] <- vec
-  names(out_l)[dd] <- names(rr)
-}
-
-#rm(list=ls()[! ls() %in% c("out_l","ESA.leg")])
-gc()
-
-out_l_red <- list()
-for(ll in 1:2){
-  out_l_red[[ll]] <- out_l[[ll]][!is.na(out_l[[1]]) & out_l[[1]] != 210]
-}
-
-names(out_l_red) <- c("NB_LAB", "idx")
-out_df <- as_data_frame(out_l_red)
-
-sum_out_df <- out_df %>% group_by(idx, NB_LAB) %>% summarise(count = n())
-
-out_df_spread <- sum_out_df %>% spread(NB_LAB, count, fill = 0)
-
-out_df_spread <- out_df_spread[out_df_spread$idx > 220,]
+# memory.limit(200000)
+# in_path2 <- "D:/Work/LiberEro/_Project/ESA/"
+# ESA.raw <- raster(paste(in_path2,"ESACCI-LC-L4-LCCS-Map-300m_2015_clip.tif",sep=""))
+# 
+# idx.r <- nb.stack[[1]]
+# idx.r[] <- 1:length(nb.stack[[1]][])
+# 
+# if(first){
+#   writeRaster(idx.r, filename=paste0(out_path,"Index_raster.tif"), format="GTiff", overwrite=TRUE)
+#   
+#   
+#   system(paste("gdalwarp -r near"
+#                ,paste0(out_path,"Index_raster.tif")
+#                ,paste0(in_path2,"Index_to_ESA_clip_float.tif"),sep=" "))
+# }
+# 
+# ESA.idx <- raster(paste(in_path2,"Index_to_ESA_clip_float.tif",sep=""))
+# 
+# 
+# LC <- stack(c(ESA.raw,ESA.idx))
+# 
+# out_l <- list()
+# for(dd in 1:nlayers(LC)){
+#   rr <- LC[[dd]]
+#   nr <- nrow(rr)
+#   nc <- ncol(rr)
+#   mm <- matrix(nrow = nr, ncol = nc)
+#   cnt <- 1
+#   for(ii in 1:nrow(rr)){
+#     
+#     if(!(ii %% 10000)){
+#       vec_tmp <- getValues(rr, (ii-9999), 10000)
+#       print(ii)
+#       flush.console()
+#       if(cnt == 1){
+#         vec <- vec_tmp
+#         cnt <- 2
+#       } else{
+#         vec <- c(vec, vec_tmp)
+#       }
+#     }
+#     
+#   }
+#   vec <- c(vec,getValues(rr, (ii-ii %% 10000), (ii %% 10000)))
+#   
+#   out_l[[dd]] <- vec
+#   names(out_l)[dd] <- names(rr)
+# }
+# 
+# #rm(list=ls()[! ls() %in% c("out_l","ESA.leg")])
+# gc()
+# 
+# out_l_red <- list()
+# for(ll in 1:2){
+#   out_l_red[[ll]] <- out_l[[ll]][!is.na(out_l[[1]]) & out_l[[1]] != 210]
+# }
+# 
+# names(out_l_red) <- c("NB_LAB", "idx")
+# out_df <- as_data_frame(out_l_red)
+# 
+# sum_out_df <- out_df %>% group_by(idx, NB_LAB) %>% summarise(count = n())
+# 
+# out_df_spread <- sum_out_df %>% spread(NB_LAB, count, fill = 0)
+# 
+# out_df_spread <- out_df_spread[out_df_spread$idx > 220,]
 
 ########
 ### WDPA
