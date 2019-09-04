@@ -1,0 +1,14 @@
+<PAMDataset>
+  <PAMRasterBand band="1">
+    <CategoryNames>
+      <Category></Category>
+      <Category>1491250</Category>
+      <Category>1139339</Category>
+      <Category>93250</Category>
+      <Category>223392</Category>
+      <Category>679654</Category>
+      <Category>682598</Category>
+      <Category>259765</Category>
+    </CategoryNames>
+  </PAMRasterBand>
+</PAMDataset>
