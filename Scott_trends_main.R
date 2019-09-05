@@ -807,7 +807,6 @@ names(lc.df)[1] <- "idx"
 
 csv.df.lc <- join(csv.df.red, lc.df, by = "idx")
 
-write.csv(csv.df.lc, here("csv.df.land_change.csv"), row.names = FALSE)
 
 csv.df.lc <- csv.df.lc %>% mutate(
   ssp1_year_50_recode =   recode(csv.df.lc$ssp1_year_50 + 1,
@@ -825,8 +824,8 @@ csv.df.lc <- csv.df.lc %>% mutate(
   
 )
 
+write.csv(csv.df.lc, here("csv.df.land_change.csv"), row.names = FALSE)
 
-recode(c(1,2,3,1,2,3), 4,5,6,6)
 ####################################################################################
 ### Figures
 ####################################################################################
