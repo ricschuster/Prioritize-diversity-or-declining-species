@@ -52,6 +52,7 @@ for(ii in c("FigS2","FigS3", "FigS4", "FigS5")){
 
 
 fig.st <- stack(fig.lst)
+names(fig.st) <- c("FigS2","FigS3", "FigS4", "FigS5")
 
 add_legend <- function(title, palette, bump = 0, low_high = FALSE, 
                        text_col = "black") {
