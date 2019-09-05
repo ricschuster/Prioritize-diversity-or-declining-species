@@ -10,17 +10,10 @@ library(here)
 library(leaflet)
 library(png)
 library(fields)
-rm(list=ls())
+library(here)
 
-setwd("C:/Users/scott/Documents/R/working/Scott_trends")
 owd<-getwd()
 
-memory.size()
-memory.size(max=FALSE)
-
-# set to 1 if first time this code is run (HF processing, )
-first <- 0
-write <- 1
 
 load("raster_setup.RData")
 here("Rup") %>% 
@@ -34,12 +27,12 @@ ne_state_lines <- read_sf("data/ne-state-lines.gpkg") %>% st_geometry()
 
 idx.r <- nb.stack[[1]]
 idx.r[] <- 1:length(nb.stack[[1]][])
-figs <- read_xlsx("diversity.land.xlsx")
+figs <- read_csv("csv.df.land_change.csv")
 figs2 <- mutate(figs,
-                Fig5a = figs$y2000,
-                Fig5b = figs$ssp1,
-                Fig5c = figs$ssp2,
-                Fig5d = figs$ssp3)
+                Fig5a = ifelse(figs$n.spp > 4, figs$year_2000_recode, NA),
+                Fig5b = ifelse(figs$n.spp > 4, figs$ssp1_year_50_recode, NA),
+                Fig5c = ifelse(figs$n.spp > 4, figs$ssp2_year_50_recode, NA),
+                Fig5d = ifelse(figs$n.spp > 4, figs$ssp3_year_50_recode, NA))
 
 # 1=forest, 2=mosaic forest, 3=peri-urban, 4=urban, 5=grassland/bare, 6=cropland/mosaic cropland-grass  
 idx.df <- data.frame(idx = idx.r[])
@@ -50,10 +43,14 @@ fig.r[] <- idx.df$Fig5a
 plot(fig.r)
 
 fig.lst <- list()
-for(ii in 4:7){
+jj <- 1
+for(ii in c("Fig5a","Fig5b", "Fig5c", "Fig5d")){
   fig.r[] <- idx.df[,ii]
-  fig.lst[[ii - 3]] <- fig.r
+  fig.lst[[jj]] <- fig.r
+  jj <- jj + 1
 }
+
+
 fig.st <- stack(fig.lst)
 names(fig.st) <- c("Fig5a", "Fig5b", "Fig5c", "Fig5d")
 
@@ -139,8 +136,8 @@ state <- st_transform(ne_state_lines, crs = crs)
 for (ii in seq_along(fig)) {
   title <- paste(fig[ii])
   # print map
-  # here("out_all_spp/fig", paste0(fig[ii], ".png")) %>% 
-  png(filename = paste0(fig[ii], ".png"), width = 3000, height = 3000, res = 300)
+  here("figures", paste0(fig[ii], ".png")) %>% 
+  png(width = 3000, height = 3000, res = 300)
   par(mar = c(0, 0, 0, 0), oma = c(0,0,0,0), bg = "white")
   plot(land, col = "gray87", border = NA, xlim = e[1:2], ylim = e[3:4])
   
@@ -174,5 +171,4 @@ for (ii in seq_along(fig)) {
   #            usr[1] + 0.38 * xwidth, usr[3] + 0.09 * yheight)
   dev.off()
 }
-
 
