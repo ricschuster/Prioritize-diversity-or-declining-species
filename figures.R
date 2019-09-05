@@ -146,13 +146,18 @@ for (ii in seq_along(fig)) {
   #pal <- colorRampPalette(pal)
   pal<-colorFactor(palette=c('forestgreen','chartreuse','royalblue1','magenta2',
                              'goldenrod3','yellow'),domain=NULL) # specify individual colors
-  nms <- c("one","two","three","four","five","six") # try this with the actual names and a rotated legend, try 
+  nms <- c("Forest",
+           "Mosaic Forest/Cropland",
+           "Peri-urban and villages",
+           "Urban",
+           "Grassland/Bare",
+           "Cropland and Mosaic Cropland/Grassland") # try this with the actual names and a rotated legend, try 
   #pal <- colorQuantile(pal, values(abd_plot[fig]), n = 8, #probs = seq(0, 1, length.out = n + 1),
   #              na.color = "#808080", alpha = FALSE, reverse = FALSE)
   plot(abd_plot[[gsub(" ", ".",fig[ii])]], add = TRUE, col = pal(1:6), legend = FALSE, 
        maxpixels = ncell(abd_plot))
-  add_legend("", pal, legend_offsets[3], low_high = TRUE,
-             text_col = text_col) # check legend rotation
+  # add_legend("", pal, legend_offsets[3], low_high = TRUE,
+  #            text_col = text_col) # check legend rotation
   
   # boundaries
   plot(state, col = "black", lwd = 0.5, lty = 1, add = TRUE)
@@ -164,8 +169,9 @@ for (ii in seq_along(fig)) {
   xwidth <- usr[2] - usr[1]
   yheight <- usr[4] - usr[3]
   # labels
-  text(x = usr[1] + 0.05 * xwidth, y = usr[3] + 0.21 * yheight,
-       labels = "something", pos = 4, font = 1, cex = 1.5, col = text_col)
+  # text(x = usr[1] + 0.05 * xwidth, y = usr[3] + 0.21 * yheight,
+  #      labels = "something", pos = 4, font = 1, cex = 1.5, col = text_col)
+  legend(x='bottomleft', legend = nms, fill = pal(1:6))
   
   #rasterImage(logo,usr[1] + 0.01 * xwidth, usr[3] + 0.03 * yheight,
   #            usr[1] + 0.38 * xwidth, usr[3] + 0.09 * yheight)
