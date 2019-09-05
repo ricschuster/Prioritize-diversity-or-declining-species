@@ -171,7 +171,9 @@ for (ii in seq_along(fig)) {
   # labels
   # text(x = usr[1] + 0.05 * xwidth, y = usr[3] + 0.21 * yheight,
   #      labels = "something", pos = 4, font = 1, cex = 1.5, col = text_col)
-  legend(x='bottomleft', legend = nms, fill = pal(1:6))
+  legend(x = usr[1] + 0.05 * xwidth, y = usr[3] + 0.21 * yheight,
+    # x='bottomleft', 
+    legend = nms, fill = pal(1:6))
   
   #rasterImage(logo,usr[1] + 0.01 * xwidth, usr[3] + 0.03 * yheight,
   #            usr[1] + 0.38 * xwidth, usr[3] + 0.09 * yheight)
