@@ -1,8 +1,6 @@
 # Data, analysis scritps and full results archive for:
 
-Wilson, S., Schuster R., Rodewald, A.D., Bennett, J.R., Smith, A.C, La Sorte, F.A., Verburg, P.H.and Arcese P.2019 Prioritize diversity or declining species? Trade-offs and synergies in spatial planning for the conservation of migratory birds in the face of land cover change. DOI: 10.1101/429019 
-
-[Link](https://www.biorxiv.org/content/10.1101/429019v2)
+Wilson, S., Schuster R., Rodewald, A.D., Bennett, J.R., Smith, A.C, La Sorte, F.A., Verburg, P.H.and Arcese P.2019 Prioritize diversity or declining species? Trade-offs and synergies in spatial planning for the conservation of migratory birds in the face of land cover change. DOI: 10.1101/429019 [Link](https://www.biorxiv.org/content/10.1101/429019v2)
 
 ### Abstract
 
